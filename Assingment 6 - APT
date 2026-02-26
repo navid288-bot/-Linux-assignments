@@ -1,0 +1,152 @@
+# APT Package Management Lab
+
+---
+
+## Part 1: Understanding APT & System Updates (15 min)
+
+### Check your system's APT version
+```bash
+apt --version
+# apt 2.8.3 (amd64)
+```
+
+### Update the package list
+```bash
+sudo apt update
+```
+This is important because it updates the system's local package lists. It does **not** install or change any packages — it only refreshes the local package list from the repositories.
+
+### Upgrade installed packages
+```bash
+sudo apt upgrade
+```
+The `upgrade` command uses the package list to actually download and install newer versions of the packages already installed. In contrast, `update` only refreshes the local package list from the repositories side.
+
+**Example output:**
+```
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+Calculating upgrade... Done
+The following upgrades have been deferred due to phasing:
+  python3-software-properties software-properties-common
+0 upgraded, 0 newly installed, 0 to remove and 2 not upgraded.
+```
+
+### View pending updates (if any)
+```bash
+apt list --upgradable
+```
+**Example output:**
+```
+python3-software-properties/noble-updates 0.99.49.4 all [upgradable from: 0.99.49.3]
+software-properties-common/noble-updates 0.99.49.4 all [upgradable from: 0.99.49.3]
+```
+
+---
+
+## Part 2: Installing & Managing Packages (20 min)
+
+### Search for a package using APT
+```bash
+apt search image editor
+```
+**Example results:** `android-platform-tools-base`, `briquolo-data`, `charactermanaj`
+
+### View package details
+```bash
+apt show charactermanaj
+```
+**Key fields from output:**
+- **Version:** 0.998+git20190331.e45260e3-3
+- **Section:** universe/graphics
+- **Installed-Size:** 1546 kB
+- **Dependencies:** `default-jre | java-runtime | java2-runtime`
+- **Description:** Avatar editor application — creates a single image by superimposing multiple selected images.
+
+### Install the package
+```bash
+sudo apt install charactermanaj
+```
+
+### Check installed package version
+```bash
+apt list --installed | grep charactermanaj
+```
+**Output:**
+```
+charactermanaj/noble,now 0.998+git20190331.e45260e3-3 all [installed]
+```
+> The installed version is **0.998+git20190331.e45260e3-3**
+
+---
+
+## Part 3: Removing & Cleaning Packages (10 min)
+
+### Uninstall the package
+```bash
+sudo apt remove charactermanaj -y
+```
+The application is removed, but automatically installed dependencies are **still present** in the system.
+
+### Remove configuration files as well
+```bash
+sudo apt purge charactermanaj -y
+```
+The `purge` command does everything `remove` does, and also **deletes the package's system configuration files**.
+
+### Clear unnecessary package dependencies
+```bash
+sudo apt autoremove -y
+```
+The `autoremove` command cleans up packages that were installed only as dependencies and are no longer needed after removing the main package.
+
+**Why it's important:**
+- Frees disk space by removing orphaned libraries and tools no longer in use.
+- Reduces clutter in the system, making future dependency resolution and upgrades cleaner and less error-prone.
+- Lowers the attack surface for potential security issues by not keeping unused software around.
+
+**Example — packages removed:**
+```
+ca-certificates-java default-jre default-jre-headless fonts-dejavu-extra
+java-common libatk-wrapper-java libatk-wrapper-java-jni libgif7 libpcsclite1
+openjdk-21-jre openjdk-21-jre-headless
+After this operation, 211 MB of disk space will be freed.
+```
+
+### Clean up downloaded package files
+```bash
+sudo apt clean
+```
+Some installer files are kept for potential reinstalls without re-downloading, but they accumulate over time. Running `clean` frees disk space occupied by package installer files that APT downloaded during install or upgrade operations.
+
+---
+
+## Part 4: Managing Repositories & Troubleshooting (15 min)
+
+### List all APT repositories
+```bash
+cat /etc/apt/sources.list
+```
+The `sources.list` file is empty. The APT repositories are defined in files within the `/etc/apt/sources.list.d/` directory instead.
+
+### Add a new repository (example: universe repository)
+```bash
+sudo add-apt-repository universe
+```
+The **universe** repository contains community-maintained open source software that is free, but doesn't receive official security updates or patches from the Canonical/Ubuntu team.
+
+### Simulate an installation failure and troubleshoot
+```bash
+sudo apt install fakepackage
+# E: Unable to locate package fakepackage
+```
+
+**Why APT can't find `fakepackage`:** The package doesn't exist in the enabled repositories.
+
+**Troubleshooting steps:**
+1. Update package lists first: `sudo apt update`
+2. Search for the actual package name: `apt search fake` or `apt-cache search fake`
+3. Check if the package exists for your distribution
+4. Verify spelling and case — package names are case-sensitive
+5. Check official documentation or use `apt search`
